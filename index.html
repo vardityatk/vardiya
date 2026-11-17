@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vardiya Çizelgesi</title>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#ffffff; --ink:#1c2430; --muted:#5d6b7c; --line:#9aa5b1; --head:#d9dee5;
+  --bar:#333f50; --sun:#808890; --s:#ffd966; --a:#70c050; --g:#1ba9e8; --hol:#e00000;
+  --off1:#4a4f55; --off2:#d9dce0;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#15191f; --card:#1e242c; --ink:#e8ecf1; --muted:#9aa7b5; --line:#4a5562; --head:#2c3541; --sun:#59636f; --off1:#8a9099; --off2:#2a3038;}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;padding:16px}
+.wrap{max-width:1200px;margin:0 auto}
+header.bar{background:var(--bar);color:#fff;text-align:center;padding:14px 10px;font-weight:700;font-size:20px;border-radius:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+input,textarea,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:3px;padding:6px 8px}
+input[type=checkbox]{width:16px;height:16px;padding:0}
+label.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
+button{cursor:pointer}
+button:hover{background:var(--head)}
+:focus-visible{outline:2px solid #1ba9e8;outline-offset:2px}
+textarea{width:260px;height:64px;resize:vertical}
+h2{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:700}
+.today{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{padding:5px 10px;border-radius:3px;font-weight:700;border:1px solid var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;vertical-align:-3px;margin-right:5px;border:1px solid var(--line)}
+.month{margin:18px 0 0}
+.mt{display:flex;gap:18px;align-items:baseline;font-size:12px;margin-bottom:3px;flex-wrap:wrap}
+.mt b{font-size:12px}
+.mt span{color:var(--hol);font-weight:700}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;table-layout:fixed;width:100%;min-width:880px}
+th,td{border:1px solid var(--line);text-align:center;font-size:11px;padding:2px 0;height:20px}
+th.lab{width:46px;background:var(--head);font-weight:700}
+.dh{background:var(--head);font-weight:700;font-size:10px}
+.dh.sun{background:var(--sun);color:#fff}
+.dh.hol{background:var(--hol);color:#fff}
+td.S{background:var(--s);color:#111;font-weight:700}
+td.A{background:var(--a);color:#111;font-weight:700}
+td.G{background:var(--g);color:#111;font-weight:700}
+td.I{background:repeating-linear-gradient(135deg,var(--off1) 0 2px,var(--off2) 2px 4px);color:transparent}
+td.hol{background:var(--hol);color:#fff}
+td.hol.I{background:repeating-linear-gradient(135deg,#a00000 0 2px,#ff9a9a 2px 4px);color:transparent}
+td.empty,th.empty{background:transparent;border-color:transparent}
+td.now,th.now{box-shadow:inset 0 0 0 2px #000}
+@media (prefers-color-scheme:dark){td.now,th.now{box-shadow:inset 0 0 0 2px #fff}}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+@media print{
+  body{background:#fff;color:#000;padding:0}
+  .noprint{display:none}
+  .scroll{overflow:visible}
+  table{min-width:0}
+  .month{break-inside:avoid;margin-top:10px}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar" id="title">Vardiya Çizelgesi</header>
+
+  <section class="panel noprint">
+    <div class="row">
+      <label>Yıl
+        <input type="number" id="year" min="2000" max="2100" step="1" style="width:90px">
+      </label>
+      <button type="button" id="prev" aria-label="Önceki yıl">‹ Önceki yıl</button>
+      <button type="button" id="next" aria-label="Sonraki yıl">Sonraki yıl ›</button>
+      <label class="chk"><input type="checkbox" id="nextJan"> Ertesi yılın Ocak ayını da göster</label>
+      <label class="chk"><input type="checkbox" id="arife"> Arife günlerini tatil say</label>
+      <button type="button" id="print">Yazdır / PDF</button>
+    </div>
+  </section>
+
+  <section class="panel noprint">
+    <h2>Grupların Sabah (S) vardiyasına başladığı bir tarih</h2>
+    <div class="row">
+      <label>A grubu <input type="date" id="gA"></label>
+      <label>B grubu <input type="date" id="gB"></label>
+      <label>C grubu <input type="date" id="gC"></label>
+      <label>D grubu <input type="date" id="gD"></label>
+      <label>Ek tatiller (her satıra bir tarih: YYYY-AA-GG)
+        <textarea id="custom" placeholder="2027-06-18"></textarea>
+      </label>
+      <button type="button" id="reset">Varsayılana dön</button>
+    </div>
+    <p class="note">Bir grubun herhangi bir Sabah bloğunun ilk gününü girin. Çizelge bu tarihten ileri ve geri 24 günlük döngüyle sonsuza kadar devam eder. Değişiklikler bu tarayıcıda hatırlanır.</p>
+  </section>
+
+  <section class="panel">
+    <h2 id="todayT">Bugün</h2>
+    <div class="today" id="today"></div>
+  </section>
+
+  <div class="legend" style="margin:6px 0">
+    <span><i style="background:var(--s)"></i>S = Sabah 08-16</span>
+    <span><i style="background:var(--a)"></i>A = Akşam 16-24</span>
+    <span><i style="background:var(--g)"></i>G = Gece 24-08</span>
+    <span><i style="background:repeating-linear-gradient(135deg,var(--off1) 0 2px,var(--off2) 2px 4px)"></i>İzin</span>
+    <span><i style="background:var(--hol)"></i>Resmi tatil</span>
+  </div>
+
+  <main id="out"></main>
+  <p class="note">Her grup 6 gün aynı vardiyada çalışır, 2 gün izin kullanır (A → S → G, 24 günlük döngü). Her gün 3 grup çalışır, 1 grup izinlidir. Sabit tatiller her yıl otomatik gelir; dini bayramlar 2025–2028 için tanımlıdır, diğer yıllar için “Ek tatiller” alanını kullanın.</p>
+</div>
+
+<script>
+(function(){
+  var PAT = "AAAAAAİİSSSSSSİİGGGGGGİİ";
+  var GROUPS = ["A","B","C","D"];
+  var DEFAULTS = {year:2026, nextJan:true, arife:true, custom:"",
+    anch:{A:"2026-11-01",B:"2026-11-19",C:"2026-11-13",D:"2026-11-07"}};
+  var MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+  var DOW = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"];
+  var FIXED = [
+    [1,1,"YILBAŞI"],[4,23,"ULUSAL EGEMENLİK VE ÇOCUK BAYRAMI"],[5,1,"İŞÇİ BAYRAMI"],
+    [5,19,"ATATÜRK’Ü ANMA GENÇLİK VE SPOR BAYRAMI"],[7,15,"DEMOKRASİ VE MİLLİ BİRLİK GÜNÜ"],
+    [8,30,"ZAFER BAYRAMI"],[10,29,"CUMHURİYET BAYRAMI"]
+  ];
+  // Dini bayram ilk günleri (yıl: [Ramazan Bayramı, Kurban Bayramı] -> [ay,gün])
+  var DINI = {
+    2025:[[3,30],[6,6]], 2026:[[3,20],[5,27]], 2027:[[3,9],[5,16]], 2028:[[2,27],[5,5]]
+  };
+  var KEY = "vardiya-ayarlar-v2";
+  var $ = function(id){return document.getElementById(id)};
+
+  function load(){
+    try{ var s = localStorage.getItem(KEY); if(s){ var o = JSON.parse(s); return Object.assign({}, DEFAULTS, o, {anch:Object.assign({}, DEFAULTS.anch, o.anch||{})}); } }catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  var state = load();
+
+  function dnum(y,m,d){ return Math.round(Date.UTC(y,m-1,d)/864e5); }
+  function parseISO(s){ var p=/^(\d{4})-(\d{2})-(\d{2})$/.exec((s||"").trim()); return p?dnum(+p[1],+p[2],+p[3]):null; }
+  function fromNum(n){ var d=new Date(n*864e5); return {y:d.getUTCFullYear(), m:d.getUTCMonth()+1, d:d.getUTCDate(), w:d.getUTCDay()}; }
+  function shiftOf(g, n){
+    var a = parseISO(state.anch[g]); if(a===null) return "";
+    return PAT.charAt((((n - a + 8) % 24) + 24) % 24);
+  }
+
+  // Tatil hesabı: {red:{dayNum:true}, titles:{"y-m":[text,...]}}
+  function holidaysFor(years){
+    var red = {}, titles = {};
+    function addTitle(y,m,t){ var k=y+"-"+m; (titles[k]=titles[k]||[]).push(t); }
+    years.forEach(function(y){
+      FIXED.forEach(function(f){
+        red[dnum(y,f[0],f[1])] = true;
+        addTitle(y,f[0], f[1]+" "+MONTHS[f[0]-1].toLocaleUpperCase("tr")+" "+f[2]);
+      });
+      var d = DINI[y];
+      if(d){
+        [["RAMAZAN BAYRAMI",3,d[0]],["KURBAN BAYRAMI",4,d[1]]].forEach(function(b){
+          var start = dnum(y,b[2][0],b[2][1]);
+          for(var i=0;i<b[1];i++) red[start+i]=true;
+          if(state.arife) red[start-1]=true;
+          var s = fromNum(start), e = fromNum(start+b[1]-1), txt;
+          if(s.m===e.m){
+            var days=[]; for(var i=0;i<b[1];i++) days.push(s.d+i);
+            txt = days.join("-")+" "+MONTHS[s.m-1].toLocaleUpperCase("tr")+" "+b[0];
+          } else {
+            txt = s.d+" "+MONTHS[s.m-1].toLocaleUpperCase("tr")+" - "+e.d+" "+MONTHS[e.m-1].toLocaleUpperCase("tr")+" "+b[0];
+          }
+          addTitle(s.y,s.m,txt);
+        });
+      }
+    });
+    (state.custom||"").split(/\r?\n/).forEach(function(line){
+      var n = parseISO(line); if(n!==null){ red[n]=true; var p=fromNum(n); addTitle(p.y,p.m,p.d+" "+MONTHS[p.m-1].toLocaleUpperCase("tr")+" EK TATİL"); }
+    });
+    return {red:red, titles:titles};
+  }
+
+  function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!==undefined) e.textContent=txt; return e; }
+
+  function render(){
+    var y = state.year;
+    var months = []; for(var m=1;m<=12;m++) months.push([y,m]);
+    if(state.nextJan) months.push([y+1,1]);
+    var hol = holidaysFor([y,y+1]);
+    var today = new Date(); var tn = dnum(today.getFullYear(), today.getMonth()+1, today.getDate());
+    $("title").textContent = y+" YILI VARDİYA ÇİZELGESİ";
+    var out = $("out"); out.innerHTML = "";
+
+    months.forEach(function(ym){
+      var Y=ym[0], M=ym[1], dim = new Date(Date.UTC(Y,M,0)).getUTCDate();
+      var box = el("section","month");
+      var mt = el("div","mt"); mt.appendChild(el("b","",Y+" - "+MONTHS[M-1]));
+      (hol.titles[Y+"-"+M]||[]).forEach(function(t){
+        // aynı ayın sabit tatil başlıklarını tek satırda birleştir
+      });
+      var tt = (hol.titles[Y+"-"+M]||[]).slice().sort(function(a,b){return parseInt(a)-parseInt(b);});
+      if(tt.length) mt.appendChild(el("span","",tt.join(" / ")));
+      box.appendChild(mt);
+      var sc = el("div","scroll"), tb = el("table"), cg = document.createElement("colgroup");
+      var c0=document.createElement("col"); c0.style.width="46px"; cg.appendChild(c0);
+      for(var i=0;i<31;i++) cg.appendChild(document.createElement("col"));
+      tb.appendChild(cg);
+      var r1=el("tr"), r2=el("tr");
+      r1.appendChild(el("th","lab","TARİH")); r2.appendChild(el("th","lab","GÜN"));
+      var rows = GROUPS.map(function(g){ var r=el("tr"); r.appendChild(el("th","lab",g)); return r; });
+      for(var d=1; d<=31; d++){
+        if(d>dim){
+          r1.appendChild(el("th","empty")); r2.appendChild(el("th","empty"));
+          rows.forEach(function(r){ r.appendChild(el("td","empty")); });
+          continue;
+        }
+        var n = dnum(Y,M,d), w = new Date(Date.UTC(Y,M-1,d)).getUTCDay();
+        var isH = !!hol.red[n], isNow = n===tn;
+        var cls = "dh"+(isH?" hol":(w===0?" sun":""))+(isNow?" now":"");
+        r1.appendChild(el("th",cls,String(d).padStart(2,"0")));
+        r2.appendChild(el("th",cls,DOW[w]));
+        rows.forEach(function(r,gi){
+          var s = shiftOf(GROUPS[gi], n);
+          var c = el("td", (s==="İ"?"I":s)+(isH?" hol":"")+(isNow?" now":""), s==="İ"?"":s);
+          r.appendChild(c);
+        });
+      }
+      tb.appendChild(r1); tb.appendChild(r2); rows.forEach(function(r){tb.appendChild(r);});
+      sc.appendChild(tb); box.appendChild(sc); out.appendChild(box);
+    });
+
+    // Bugün
+    var t = fromNum(tn), td = $("today"); td.innerHTML = "";
+    $("todayT").textContent = "Bugün: "+t.d+" "+MONTHS[t.m-1]+" "+t.y+", "+DOW[t.w];
+    var NAMES = {S:"Sabah 08-16",A:"Akşam 16-24",G:"Gece 24-08",İ:"İzinli"};
+    GROUPS.forEach(function(g){
+      var s = shiftOf(g, tn), c = el("span","chip",g+" grubu: "+(NAMES[s]||"—"));
+      if(s==="S") c.style.background="var(--s)"; else if(s==="A") c.style.background="var(--a)"; else if(s==="G") c.style.background="var(--g)";
+      if(s && s!=="İ") c.style.color="#111";
+      td.appendChild(c);
+    });
+  }
+
+  function syncInputs(){
+    $("year").value = state.year; $("nextJan").checked = !!state.nextJan; $("arife").checked = !!state.arife;
+    GROUPS.forEach(function(g){ $("g"+g).value = state.anch[g]; });
+    $("custom").value = state.custom||"";
+  }
+  function bind(){
+    $("year").addEventListener("change", function(){ var v=parseInt(this.value,10); if(v>=2000&&v<=2100){state.year=v;save();render();} });
+    $("prev").addEventListener("click", function(){ state.year--; syncInputs(); save(); render(); });
+    $("next").addEventListener("click", function(){ state.year++; syncInputs(); save(); render(); });
+    $("nextJan").addEventListener("change", function(){ state.nextJan=this.checked; save(); render(); });
+    $("arife").addEventListener("change", function(){ state.arife=this.checked; save(); render(); });
+    $("custom").addEventListener("input", function(){ state.custom=this.value; save(); render(); });
+    GROUPS.forEach(function(g){ $("g"+g).addEventListener("change", function(){ if(parseISO(this.value)!==null){ state.anch[g]=this.value; save(); render(); } }); });
+    $("reset").addEventListener("click", function(){ state = JSON.parse(JSON.stringify(DEFAULTS)); save(); syncInputs(); render(); });
+    $("print").addEventListener("click", function(){ window.print(); });
+  }
+  syncInputs(); bind(); render();
+})();
+</script>
+</body>
+</html>
